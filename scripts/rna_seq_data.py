@@ -23,7 +23,8 @@ import datetime
 import string 
 import sqlite3
 import urllib 
-
+from collections import defaultdict
+import collections
 utils.ga4ghImportGlue()
 
 # We need to turn off QA because of the import glue
@@ -168,73 +169,28 @@ def parse_file_tcga(filename):
   print("Loading biodata tsv from tcga")
   with open(filename, 'r') as tsvfile:
       reader = csv.DictReader(tsvfile,delimiter=str("\t"), quoting=csv.QUOTE_NONE)
+      #id_map ={}
       for row in reader:
-        description = "{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}".format(
-	    # 1) e.g. TCGA 
-        row['study'],
-        # 2) e.g. TCGA-DQ-5630-01A-01R-1873-07  
+        description = "{}{}".format(
         row['barcode'],
-        # 3) e.g. HNSC
-        row['disease'],
-		# 4) e.g. Head and Neck squamous cell carcinoma
-		row['disease_name'],
-		# 5) e.g. TP
-		row['sample_type'],
-		# 6) e.g. 01
-		row['sample_type_name'],
-		# 7) e.g. RNA
-		row['analyte_type'],
-		# 8) e.g. RNA-Seq
-		row['library_type'],
-		# 9) e.g. UNC-LCCC
-		row['center'],
-		# 10) e.g. UNC-LCCC 
-		row['center_name'],
-		# 11) e.g. ILLUMINA 
-		row['platform'],
-		# 12) e.g. Illumina
-		row['platform_name'],
-		# 13) e.g. unaligned
-		row['assembly'],
-		# 14) e.g. UNCID_2200798.13c839d1-f77b-4bde-9bd5-8d5165d94346.111122_UNC15-SN850_0148_AC05D7ACXX_8_GGCTAC.tar.gz
-		row['filename'],
-		# 15) e.g. 5747943025
-		row['files_size'],
-		# 16) e.g. d81203da215be180128f260b788900b5
-		row['checksum'],
-		# 17) e.g. 5557a728-1827-4aff-b28b-f004d835f9d6
-		row['analysis_id'],
-		# 18) e.g. 13c839d1-f77b-4bde-9bd5-8d5165d94346 
-		row['aliquot_id'],
-		# 19) e.g. 91a712b5-a724-48d0-ba06-4f6857683463
-		row['participant_id'],
-		# 20) e.g. a0cdb208-e66f-4ad7-86fa-5077145a4a68
-		row['sample_id'],
-		# 21) e.g. A5 
-		row['tss_id'],
-		# 22) e.g.  SRS128873 
-		row['sample_accession'],
-		# 23) e.g. 2013-09-27
-		row['published'],
-		# 24) e.g. 2013-09-25
-		row['uploaded'],
-		# 25) e.g. 2013-09-27
-		row['modified'],
-		# 26) e.g. Live
-		row['state'],
-		# 27) ...
-        row['reason'])
+		row['disease_name'])
         info = {}
         for key in row:
           info[key] = [row[key]]
         # TODO update to use schemas
+        #if (row['sample_id'] == row['participant_id']):
+	#		print ("{} {}".formatrow['sample_id'], row['participant_id'])
+          
+         #assert(id_map.get(row['sample_id'] == row['participant_id']))
+        #else:
+        #  id_map[row['sample_id']] = row['participant_id']	
         biosample = { 
              "name": row['sample_id'],
              "description": description,
              "disease": row['disease'],  # Ontology term
              "created": row['published'],
              "updated": row['modified'],
-             "info": info
+			 "info": info
         }   
         if row['filename'] == 'male':
            sex = { 
@@ -257,7 +213,7 @@ def parse_file_tcga(filename):
                "description": description,
                "created": row['published'],
                "updated": row['modified'],
-               "species": {
+			   "species": {
                    "term": row['disease'],
                    "id": row['sample_id'],
                    "sourceName": "http://purl.obolibrary.org/obo/doid.owl",
@@ -270,12 +226,42 @@ def parse_file_tcga(filename):
   return individuals, bio_samples
 
 # parse list of individuals and filter them distinctly
-#def filter_individuals_tcga(individuals):
+def filter_individuals_tcga(individuals):
 
-#	print ("filtering")
+	print ("filtering")
+	ind_list = []
+	#count = 0
+	for i in range(len(individuals)):
+		name = individuals[i]
+		name = name['name']
+		#if (name == "51bd85e2-2c60-4654-bfcb-83dccef8964b"): 
+		#name = name['aliquot']
+		#print (name)
+		ind_list.append(name)
 
+	ind_set = set(ind_list)
 	
-# main():
+	print (len(ind_list) is len(ind_set))	
+
+
+# parse list of biosamples and filter them distinctly
+def filter_biosamples_tcga(biosamples):
+    print ("filtering")
+    bio_list = []
+    count = 0
+    print(len(biosamples)) 
+    for k in range(len(biosamples)):
+       bs = biosamples[k]
+       #print(bs)
+       name = bs['name']
+       distinct_name = filter(lambda x: x['name'] == name, biosamples)
+       for j,item in enumerate(distinct_name):
+            item['name'] = item['name'] + '-' + (j>0) * str(j)
+       print (name)	
+       #if (name == "51bd85e2-2c60-4654-bfcb-83dccef8964b"): 
+    return biosamples 
+
+
 # populates database relations with data from each person
 # in the RnaQuantificationSet, RnaQuantification, and ExpressionLevel  
 @utils.Timed()
@@ -286,18 +272,30 @@ def main():
     individuals_gtex, bio_samples_gtex = parse_file_gtex(tsv_location_gtex)
     tsv_location_tcga = 'tcga.tsv'
     individuals_tcga, bio_samples_tcga = parse_file_tcga(tsv_location_tcga)
+    
+    filter_biosamples_tcga(individuals_tcga)
+    #filter_biosamples_tcga(bio_samples_tcga)
     #print (individuals_tcga)
-	#repoPath = os.path.join("repo.db")
-    #repo = datarepo.SqlDataRepository(repoPath)
-    #if ( os.path.isfile("repo.db") == True ):
-    #    os.system( "rm repo.db" )
-    #repo.open("w")
-    #repo.initialise()
-    #dataset = datasets.Dataset("1kgenomes")
-    #dataset.setDescription("Variants from the 1000 Genomes project and GENCODE genes annotations")
-    #repo.insertDataset(dataset) 
-    #print("Inserting biosamples")
-    #print("Load list of read group sets")
+    repoPath = os.path.join("repo.db")
+    repo = datarepo.SqlDataRepository(repoPath)
+    if ( os.path.isfile("repo.db") == True ):
+        os.system( "rm repo.db" )
+    repo.open("w")
+    repo.initialise()
+    dataset = datasets.Dataset("1kgenomes")
+    dataset.setDescription("Variants from the 1000 Genomes project and GENCODE genes annotations")
+    repo.insertDataset(dataset) 
+    print("Inserting tcga individuals")
+    new_individuals= []
+    #for individual in individuals_tcga:
+    #  new_individual = biodata.Individual(dataset, individual['name'])
+    #  new_individual.populateFromJson(json.dumps(individual))
+    #  repo.insertIndividual(new_individual)
+    #  new_individuals.append(new_individual)
+
+
+
+	#print("Load list of read group sets")
     #with open (index_list_path) as merged:
     #    data = json.load(merged)
     #    print("Found {} read group sets".format(len(data)))
