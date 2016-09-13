@@ -25,6 +25,7 @@ import sqlite3
 import urllib 
 from collections import defaultdict
 import collections
+import ontospy
 utils.ga4ghImportGlue()
 
 # We need to turn off QA because of the import glue
@@ -37,6 +38,13 @@ import ga4gh.datamodel.ontologies as ontologies  # NOQA
 import ga4gh.datamodel.sequenceAnnotations as sequenceAnnotations  # NOQA
 import ga4gh.datamodel.bio_metadata as biodata  # NOQA
 import ga4gh.datamodel.rna_quantification as rnaQuantifications #NOQA
+
+
+def test_ontospy():
+	print ("testing")
+	g = ontospy.Graph("http://xmlns.com/foaf/0.1/")
+	#g = ontospy.Graph()
+
 
 # save_files_locally()
 # Requires wget
@@ -187,6 +195,7 @@ def parse_file_tcga(filename):
         biosample = { 
              "name": row['sample_id'],
              "description": description,
+             # diagnosis --> SampleCharacteristics, or SampleFeatures, or SampleOntologies 
              "disease": row['disease'],  # Ontology term
              "created": row['published'],
              "updated": row['modified'],
@@ -225,25 +234,6 @@ def parse_file_tcga(filename):
         individuals.append(individual)
   return individuals, bio_samples
 
-# parse list of individuals and filter them distinctly
-def filter_individuals_tcga(individuals):
-
-	print ("filtering")
-	ind_list = []
-	#count = 0
-	for i in range(len(individuals)):
-		name = individuals[i]
-		name = name['name']
-		#if (name == "51bd85e2-2c60-4654-bfcb-83dccef8964b"): 
-		#name = name['aliquot']
-		#print (name)
-		ind_list.append(name)
-
-	ind_set = set(ind_list)
-	
-	print (len(ind_list) is len(ind_set))	
-
-
 # parse list of biosamples and filter them distinctly
 def filter_biosamples_tcga(biosamples):
     print ("filtering")
@@ -261,6 +251,91 @@ def filter_biosamples_tcga(biosamples):
        #if (name == "51bd85e2-2c60-4654-bfcb-83dccef8964b"): 
     return biosamples 
 
+# disease_ontology
+def initialize_disease_ontology(filename):
+  ontology_dict = {}
+  print("Loading biodata tsv from tcga")
+  empty_dict = {}
+  with open(filename, 'r') as tsvfile:
+      reader = csv.DictReader(tsvfile,delimiter=str("\t"), quoting=csv.QUOTE_NONE)
+      for row in reader:
+        disease_name = row['disease_name']	
+        ontology_dict[disease_name] = empty_dict
+
+  return ontology_dict
+
+# specification_list
+def specification_list():
+	spec_list = [
+	# Uterine Corpus Endometrioid Carcinoma 
+    {"id": "DOID:2871","term":"endometrial carcinoma" ,"source_name":"Disease Ontology","source_version":"25:03:2016 16:27"},
+	# Adrenocortical carcinoma
+    {"id": "DOID:3948" ,"term":"Adrenal cortical carcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
+    # Thymoma 
+    {"id": "DOID:3275","term":"thymoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
+    # Ovarian serous cystadenocarcinoma 
+	{"id":"DOID:5746" ,"term":"ovarian serous cystadenocarcinoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27" },
+	# Kidney renal clear cell carcinoma
+	{"id":" DOID:4467" ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Thyroid carcinoma 
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Cervical squamous cell carcinoma and endocervical adenocarcinoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Uveal Melanoma 
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Stomach adenocarcinoma 
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Lung squamous cell carcinoma 
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Colon adenocarcinoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Liver hepatocellular carcinoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Mesothelioma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Head and Neck squamous cell carcinoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Pheochromocytoma and Paraganglioma 
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Breast invasive carcinoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Uterine Carcinosarcoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Rectum adenocarcinoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Prostate adenocarcinoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Kidney Chromophobe
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Pancreatic adenocarcinoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Kidney renal papillary cell carcinoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Brain Lower Grade Glioma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Lymphoid Neoplasm Diffuse Large B-cell Lymphoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Controls 
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Lung adenocarcinoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Bladder Urothelial Carcinoma 
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Cholangiocarcinoma 
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Testicular Germ Cell Tumors
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Glioblastoma multiforme
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	# Sarcoma
+	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": } ]	
+	return spec_list
+
+#def populate_ontology_dict(ontology_dict):
+#	
+#  for key, value in ontology_dict.iteritems():
+#       ontology_dict[key] =  	
+
 
 # populates database relations with data from each person
 # in the RnaQuantificationSet, RnaQuantification, and ExpressionLevel  
@@ -268,25 +343,26 @@ def filter_biosamples_tcga(biosamples):
 def main():
     #index_list_path = 'merged.json'
     #download_indexes = False
-    tsv_location_gtex = 'gtex.tsv'
-    individuals_gtex, bio_samples_gtex = parse_file_gtex(tsv_location_gtex)
+    #tsv_location_gtex = 'gtex.tsv'
+    #individuals_gtex, bio_samples_gtex = parse_file_gtex(tsv_location_gtex)
     tsv_location_tcga = 'tcga.tsv'
-    individuals_tcga, bio_samples_tcga = parse_file_tcga(tsv_location_tcga)
-    
-    filter_biosamples_tcga(individuals_tcga)
+    #individuals_tcga, bio_samples_tcga = parse_file_tcga(tsv_location_tcga)
+    ontology_dict = initialize_disease_ontology(tsv_location_tcga)
+    print(ontology_dict) 
+    #filter_biosamples_tcga(individuals_tcga)
     #filter_biosamples_tcga(bio_samples_tcga)
     #print (individuals_tcga)
-    repoPath = os.path.join("repo.db")
-    repo = datarepo.SqlDataRepository(repoPath)
-    if ( os.path.isfile("repo.db") == True ):
-        os.system( "rm repo.db" )
-    repo.open("w")
-    repo.initialise()
-    dataset = datasets.Dataset("1kgenomes")
-    dataset.setDescription("Variants from the 1000 Genomes project and GENCODE genes annotations")
-    repo.insertDataset(dataset) 
-    print("Inserting tcga individuals")
-    new_individuals= []
+    #repoPath = os.path.join("repo.db")
+    #repo = datarepo.SqlDataRepository(repoPath)
+    #if ( os.path.isfile("repo.db") == True ):
+    #    os.system( "rm repo.db" )
+    #repo.open("w")
+    #repo.initialise()
+    #dataset = datasets.Dataset("1kgenomes")
+    #dataset.setDescription("Variants from the 1000 Genomes project and GENCODE genes annotations")
+    #repo.insertDataset(dataset) 
+    #print("Inserting tcga individuals")
+    #new_individuals= []
     #for individual in individuals_tcga:
     #  new_individual = biodata.Individual(dataset, individual['name'])
     #  new_individual.populateFromJson(json.dumps(individual))
@@ -322,3 +398,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+	#test_ontospy()
