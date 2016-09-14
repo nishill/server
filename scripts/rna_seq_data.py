@@ -13,6 +13,7 @@ import os
 import shutil
 import json
 import pysam
+import numpy
 import utils
 import sys
 import generate_gff3_db
@@ -169,9 +170,20 @@ def parse_file_gtex(filename):
         individuals.append(individual)
   return individuals, bio_samples 
 
-# parses the tcga rna quantification data in a tsv file and returns
+# populates a dictionary of ontology terms from a json file
+# made from ontobee.org and tcga ontology terms 
+def populate_ontology_dict():
+  #tsv_location_tcga = 'tcga.tsv'
+  #ontology_dict = initialize_disease_ontology(tsv_location_tcga)   
+  json_file = open('out.json')
+  ontology_dict = json_file.read()
+  ontology_dict = json.loads(ontology_dict)
+  return (ontology_dict)
+
+#the tcga rna quantification data in a tsv file and returns
 # individual and biosample dictionaries
 def parse_file_tcga(filename):
+  ontology_dict = populate_ontology_dict()
   bio_samples = []
   individuals = []
   print("Loading biodata tsv from tcga")
@@ -196,7 +208,7 @@ def parse_file_tcga(filename):
              "name": row['sample_id'],
              "description": description,
              # diagnosis --> SampleCharacteristics, or SampleFeatures, or SampleOntologies 
-             "disease": row['disease'],  # Ontology term
+             "disease": ontology_dict[row['disease_name']],  # Ontology term
              "created": row['published'],
              "updated": row['modified'],
 			 "info": info
@@ -239,16 +251,12 @@ def filter_biosamples_tcga(biosamples):
     print ("filtering")
     bio_list = []
     count = 0
-    print(len(biosamples)) 
     for k in range(len(biosamples)):
        bs = biosamples[k]
-       #print(bs)
        name = bs['name']
        distinct_name = filter(lambda x: x['name'] == name, biosamples)
        for j,item in enumerate(distinct_name):
             item['name'] = item['name'] + '-' + (j>0) * str(j)
-       print (name)	
-       #if (name == "51bd85e2-2c60-4654-bfcb-83dccef8964b"): 
     return biosamples 
 
 # disease_ontology
@@ -276,65 +284,64 @@ def specification_list():
     # Ovarian serous cystadenocarcinoma 
 	{"id":"DOID:5746" ,"term":"ovarian serous cystadenocarcinoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27" },
 	# Kidney renal clear cell carcinoma
-	{"id":" DOID:4467" ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:4467" ,"term":" clear cell kidney carcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Thyroid carcinoma 
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:3963" ,"term":"Thyroid carcinoma" ,"source_name": "Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Cervical squamous cell carcinoma and endocervical adenocarcinoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id": "DOID:3744","term":"Cervical squamous cell carcinoma and endocervical adenocarcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27"},
 	# Uveal Melanoma 
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:6039" ,"term":"melanoma of Uvea" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Stomach adenocarcinoma 
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:3717", "term":"Stomach adenocarcinoma", "source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Lung squamous cell carcinoma 
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:3907" , "term":"squamous cell carcinoma of lung", "source_name":"Disease Ontology", "source_version":"25:03:2016 16:27" },
 	# Colon adenocarcinoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:234" ,"term":"adenocarcinoma of the colon" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Liver hepatocellular carcinoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:686" ,"term":"Liver and Intrahepatic bile duct carcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
+	# Esophageal carcinoma
+	{"id":"DOID:1107" ,"term":"cancer of esophagus" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Mesothelioma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:4486" ,"term":"mixed Mesothelioma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Head and Neck squamous cell carcinoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:5520" ,"term":"Head and Neck squamous cell carcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Pheochromocytoma and Paraganglioma 
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:0050892" ,"term":"Pheochromocytoma and Paraganglioma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Breast invasive carcinoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:3610" ,"term":"Invasive mucinous breast carcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27"},
 	# Uterine Carcinosarcoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:6171" ,"term":"mixed mullerian sarcoma of uterus" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Rectum adenocarcinoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id": "DOID:1996","term":"adenocarcinoma of rectum" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
+	# Skin Cutaneous Melanoma
+	{"id": "DOID:8923","term":"skin melanoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
 	# Prostate adenocarcinoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:2526" ,"term":"Prostate adenocarcinoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Kidney Chromophobe
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:4471" ,"term":"Chromophobe carcinoma of kidney" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Pancreatic adenocarcinoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id": "DOID:4074" ,"term":"adenocarcinoma of the pancreas" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Kidney renal papillary cell carcinoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id": "DOID:4465/DOID:8063" ,"term": "Papillary renal cell carcinoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Brain Lower Grade Glioma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:0060108" ,"term":"lower grade glioma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Lymphoid Neoplasm Diffuse Large B-cell Lymphoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:0050745" ,"term":"diffuse large B-cell lymphoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Controls 
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"" ,"term":"" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Lung adenocarcinoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:3910" ,"term":"adenocarcinoma of lung" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Bladder Urothelial Carcinoma 
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:4006" ,"term":"urothelial bladder carcinoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Cholangiocarcinoma 
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id": "DOID:4947","term":"cholangiosarcoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Testicular Germ Cell Tumors
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:5557" ,"term":"germ cell tumor of testis" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Glioblastoma multiforme
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": },
+	{"id":"DOID:3068" ,"term":"Glioblastoma multiforme" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
 	# Sarcoma
-	{"id": ,"term": ,"source_name":"Disease Ontology" ,"source_version": } ]	
+	{"id":"DOID:1115" ,"term":"tumor of soft tissue and skeleton" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"} ]	
 	return spec_list
-
-#def populate_ontology_dict(ontology_dict):
-#	
-#  for key, value in ontology_dict.iteritems():
-#       ontology_dict[key] =  	
 
 
 # populates database relations with data from each person
@@ -343,15 +350,14 @@ def specification_list():
 def main():
     #index_list_path = 'merged.json'
     #download_indexes = False
-    #tsv_location_gtex = 'gtex.tsv'
-    #individuals_gtex, bio_samples_gtex = parse_file_gtex(tsv_location_gtex)
     tsv_location_tcga = 'tcga.tsv'
-    #individuals_tcga, bio_samples_tcga = parse_file_tcga(tsv_location_tcga)
-    ontology_dict = initialize_disease_ontology(tsv_location_tcga)
-    print(ontology_dict) 
-    #filter_biosamples_tcga(individuals_tcga)
+    #individuals_gtex, bio_samples_gtex = parse_file_gtex(tsv_location_gtex)
+    individuals_tcga, bio_samples_tcga = parse_file_tcga(tsv_location_tcga)
+    #ontology_dict = populate_ontology_dict()
+    #print (ontology_dict)
+	#filter_biosamples_tcga(individuals_tcga)
     #filter_biosamples_tcga(bio_samples_tcga)
-    #print (individuals_tcga)
+    print (bio_samples_tcga)
     #repoPath = os.path.join("repo.db")
     #repo = datarepo.SqlDataRepository(repoPath)
     #if ( os.path.isfile("repo.db") == True ):
