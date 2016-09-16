@@ -40,13 +40,6 @@ import ga4gh.datamodel.sequenceAnnotations as sequenceAnnotations  # NOQA
 import ga4gh.datamodel.bio_metadata as biodata  # NOQA
 import ga4gh.datamodel.rna_quantification as rnaQuantifications #NOQA
 
-
-def test_ontospy():
-	print ("testing")
-	g = ontospy.Graph("http://xmlns.com/foaf/0.1/")
-	#g = ontospy.Graph()
-
-
 # save_files_locally()
 # Requires wget
 def save_files_locally(data):
@@ -189,9 +182,9 @@ def parse_file_tcga(filename):
   print("Loading biodata tsv from tcga")
   with open(filename, 'r') as tsvfile:
       reader = csv.DictReader(tsvfile,delimiter=str("\t"), quoting=csv.QUOTE_NONE)
-      #id_map ={}
+      id_map ={}
       for row in reader:
-        description = "{}{}".format(
+        description = "{}, {}".format(
         row['barcode'],
 		row['disease_name'])
         info = {}
@@ -199,11 +192,11 @@ def parse_file_tcga(filename):
           info[key] = [row[key]]
         # TODO update to use schemas
         #if (row['sample_id'] == row['participant_id']):
-	#		print ("{} {}".formatrow['sample_id'], row['participant_id'])
-          
-         #assert(id_map.get(row['sample_id'] == row['participant_id']))
+        #  print ("{} {}".formatrow['sample_id'], row['participant_id'])
+        #  assert(id_map.get(row['sample_id'] == row['participant_id']))
         #else:
         #  id_map[row['sample_id']] = row['participant_id']	
+        #print ( row['sample_id'])
         biosample = { 
              "name": row['sample_id'],
              "description": description,
@@ -231,6 +224,7 @@ def parse_file_tcga(filename):
           sex = None
         individual = { 
                "name": row['participant_id'],
+               "dataset_id": None,
                "description": description,
                "created": row['published'],
                "updated": row['modified'],
@@ -247,18 +241,19 @@ def parse_file_tcga(filename):
   return individuals, bio_samples
 
 # parse list of biosamples and filter them distinctly
-def filter_biosamples_tcga(biosamples):
-    print ("filtering")
+def filter_data(data):
+    print ("filtering data")
     bio_list = []
     count = 0
-    for k in range(len(biosamples)):
-       bs = biosamples[k]
-       name = bs['name']
-       distinct_name = filter(lambda x: x['name'] == name, biosamples)
+    for k in range(len(data)):
+       d = data[k]
+       name = d['name']
+       distinct_name = filter(lambda x: x['name'] == name, data)
        for j,item in enumerate(distinct_name):
             item['name'] = item['name'] + '-' + (j>0) * str(j)
-    return biosamples 
-
+    print ("filtering on data complete")
+    return data
+        
 # disease_ontology
 def initialize_disease_ontology(filename):
   ontology_dict = {}
@@ -348,34 +343,58 @@ def specification_list():
 # in the RnaQuantificationSet, RnaQuantification, and ExpressionLevel  
 @utils.Timed()
 def main():
-    #index_list_path = 'merged.json'
-    #download_indexes = False
+    tsv_location_gtex = 'gtex.tsv'
     tsv_location_tcga = 'tcga.tsv'
-    #individuals_gtex, bio_samples_gtex = parse_file_gtex(tsv_location_gtex)
+    individuals_gtex, bio_samples_gtex = parse_file_gtex(tsv_location_gtex)
     individuals_tcga, bio_samples_tcga = parse_file_tcga(tsv_location_tcga)
-    #ontology_dict = populate_ontology_dict()
-    #print (ontology_dict)
-	#filter_biosamples_tcga(individuals_tcga)
-    #filter_biosamples_tcga(bio_samples_tcga)
-    print (bio_samples_tcga)
-    #repoPath = os.path.join("repo.db")
-    #repo = datarepo.SqlDataRepository(repoPath)
-    #if ( os.path.isfile("repo.db") == True ):
-    #    os.system( "rm repo.db" )
-    #repo.open("w")
-    #repo.initialise()
-    #dataset = datasets.Dataset("1kgenomes")
-    #dataset.setDescription("Variants from the 1000 Genomes project and GENCODE genes annotations")
-    #repo.insertDataset(dataset) 
-    #print("Inserting tcga individuals")
-    #new_individuals= []
+    individuals_gtex = filter_data(individuals_gtex)
+    #bio_samples_gtex = filter_data(bio_samples_gtex)
+    individuals_tcga = filter_data(individuals_tcga)
+    #bio_samples_tcga = filter_data(bio_samples_tcga)
+    repoPath = os.path.join("repo.db")
+    repo = datarepo.SqlDataRepository(repoPath)
+    if ( os.path.isfile("repo.db") == True ):
+        os.system( "rm repo.db" )
+    repo.open("w")
+    repo.initialise()
+    dataset = datasets.Dataset("1kgenomes")
+    dataset.setDescription("Variants from the 1000 Genomes project and GENCODE genes annotations")
+    repo.insertDataset(dataset) 
+    
+    print("Inserting gtex individuals")
+    new_individuals_gtex = []
+    for individual in individuals_gtex:
+      new_individual = biodata.Individual(dataset, individual['name'])
+      new_individual.populateFromJson(json.dumps(individual))
+      repo.insertIndividual(new_individual)
+      new_individuals_gtex.append(new_individual)
+
+    #print ("Inserting tcga individuals")
+    #new_individuals_tcga = []
     #for individual in individuals_tcga:
-    #  new_individual = biodata.Individual(dataset, individual['name'])
-    #  new_individual.populateFromJson(json.dumps(individual))
-    #  repo.insertIndividual(new_individual)
-    #  new_individuals.append(new_individual)
+#		new_individual = biodata.Individual(dataset, individual['name'])
+#		new_individual.populateFromJson(json.dumps(individual))
+#		repo.insertIndividual(new_individual)
+#		new_individuals_tcga.append(new_individual)
 
+    print ("Inserting gtex biosamples")
+    new_bio_samples_gtex = []
+    for bio_sample in bio_samples_gtex:
+        new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
+        new_bio_sample.populateFromJson(json.dumps(bio_sample))
+        repo.insertBioSample(new_bio_sample)
+        new_bio_samples_gtex.append(new_bio_sample)
 
+    #print ("Inserting tcga biosamples")
+    #new_bio_samples_tcga = []
+    #for bio_sample in bio_samples_tcga:
+    #    new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
+    #    new_bio_sample.populateFromJson(json.dumps(bio_sample))
+    #    print (new_bio_sample)
+        #new_bio_sample.loads()
+        #print ( new_bio_sample)
+    #    repo.insertBioSample(new_bio_sample)
+    #    new_bio_samples_tcga.append(new_bio_sample)
 
 	#print("Load list of read group sets")
     #with open (index_list_path) as merged:
@@ -399,7 +418,7 @@ def main():
     #        repo.insertReadGroupSet(read_group_set)
     
     
-    #repo.commit()
+    repo.commit()
     #print ( "database filled!")			
 
 if __name__ == "__main__":
