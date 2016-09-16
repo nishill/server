@@ -122,10 +122,12 @@ def parse_file_gtex(filename):
         for key in row:
           info[key] = [row[key]]
         # TODO update to use schemas
+        disease = row['Characteristics[disease]']
+        if ( disease == 'normal'): disease = None
         biosample = {
              "name": row['Source Name'],
              "description": description,
-             "disease": row['Characteristics[disease]'],  # Ontology term
+             "disease": disease,  # Ontology term
              "created": datetime.datetime.now().isoformat(),
              "updated": datetime.datetime.now().isoformat(),
              "info": info
@@ -166,9 +168,7 @@ def parse_file_gtex(filename):
 # populates a dictionary of ontology terms from a json file
 # made from ontobee.org and tcga ontology terms 
 def populate_ontology_dict():
-  #tsv_location_tcga = 'tcga.tsv'
-  #ontology_dict = initialize_disease_ontology(tsv_location_tcga)   
-  json_file = open('out.json')
+  json_file = open('new_out.json')
   ontology_dict = json_file.read()
   ontology_dict = json.loads(ontology_dict)
   return (ontology_dict)
@@ -197,10 +197,11 @@ def parse_file_tcga(filename):
         #else:
         #  id_map[row['sample_id']] = row['participant_id']	
         #print ( row['sample_id'])
+        #print (row['disease_name'])
+        #print (ontology_dict[row['disease_name']])
         biosample = { 
              "name": row['sample_id'],
              "description": description,
-             # diagnosis --> SampleCharacteristics, or SampleFeatures, or SampleOntologies 
              "disease": ontology_dict[row['disease_name']],  # Ontology term
              "created": row['published'],
              "updated": row['modified'],
@@ -224,7 +225,6 @@ def parse_file_tcga(filename):
           sex = None
         individual = { 
                "name": row['participant_id'],
-               "dataset_id": None,
                "description": description,
                "created": row['published'],
                "updated": row['modified'],
@@ -264,7 +264,7 @@ def initialize_disease_ontology(filename):
       for row in reader:
         disease_name = row['disease_name']	
         ontology_dict[disease_name] = empty_dict
-
+  print (ontology_dict)
   return ontology_dict
 
 # specification_list
@@ -348,9 +348,9 @@ def main():
     individuals_gtex, bio_samples_gtex = parse_file_gtex(tsv_location_gtex)
     individuals_tcga, bio_samples_tcga = parse_file_tcga(tsv_location_tcga)
     individuals_gtex = filter_data(individuals_gtex)
-    #bio_samples_gtex = filter_data(bio_samples_gtex)
+    bio_samples_gtex = filter_data(bio_samples_gtex)
     individuals_tcga = filter_data(individuals_tcga)
-    #bio_samples_tcga = filter_data(bio_samples_tcga)
+    bio_samples_tcga = filter_data(bio_samples_tcga)
     repoPath = os.path.join("repo.db")
     repo = datarepo.SqlDataRepository(repoPath)
     if ( os.path.isfile("repo.db") == True ):
@@ -360,7 +360,6 @@ def main():
     dataset = datasets.Dataset("1kgenomes")
     dataset.setDescription("Variants from the 1000 Genomes project and GENCODE genes annotations")
     repo.insertDataset(dataset) 
-    
     print("Inserting gtex individuals")
     new_individuals_gtex = []
     for individual in individuals_gtex:
@@ -369,13 +368,13 @@ def main():
       repo.insertIndividual(new_individual)
       new_individuals_gtex.append(new_individual)
 
-    #print ("Inserting tcga individuals")
-    #new_individuals_tcga = []
-    #for individual in individuals_tcga:
-#		new_individual = biodata.Individual(dataset, individual['name'])
-#		new_individual.populateFromJson(json.dumps(individual))
-#		repo.insertIndividual(new_individual)
-#		new_individuals_tcga.append(new_individual)
+    print ("Inserting tcga individuals")
+    new_individuals_tcga = []
+    for individual in individuals_tcga:
+		new_individual = biodata.Individual(dataset, individual['name'])
+		new_individual.populateFromJson(json.dumps(individual))
+		repo.insertIndividual(new_individual)
+		new_individuals_tcga.append(new_individual)
 
     print ("Inserting gtex biosamples")
     new_bio_samples_gtex = []
@@ -384,19 +383,15 @@ def main():
         new_bio_sample.populateFromJson(json.dumps(bio_sample))
         repo.insertBioSample(new_bio_sample)
         new_bio_samples_gtex.append(new_bio_sample)
+    print ("Inserting tcga biosamples")
+    new_bio_samples_tcga = []
+    for bio_sample in bio_samples_tcga:
+        new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
+        new_bio_sample.populateFromJson(json.dumps(bio_sample))
+        repo.insertBioSample(new_bio_sample)
+        new_bio_samples_tcga.append(new_bio_sample)
 
-    #print ("Inserting tcga biosamples")
-    #new_bio_samples_tcga = []
-    #for bio_sample in bio_samples_tcga:
-    #    new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
-    #    new_bio_sample.populateFromJson(json.dumps(bio_sample))
-    #    print (new_bio_sample)
-        #new_bio_sample.loads()
-        #print ( new_bio_sample)
-    #    repo.insertBioSample(new_bio_sample)
-    #    new_bio_samples_tcga.append(new_bio_sample)
-
-	#print("Load list of read group sets")
+	print("Load list of read group sets")
     #with open (index_list_path) as merged:
     #    data = json.load(merged)
     #    print("Found {} read group sets".format(len(data)))
