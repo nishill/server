@@ -26,7 +26,6 @@ import sqlite3
 import urllib 
 from collections import defaultdict
 import collections
-import ontospy
 utils.ga4ghImportGlue()
 
 # We need to turn off QA because of the import glue
@@ -381,17 +380,22 @@ def main():
     for bio_sample in bio_samples_gtex:
         new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
         new_bio_sample.populateFromJson(json.dumps(bio_sample))
-        repo.insertBioSample(new_bio_sample)
         new_bio_samples_gtex.append(new_bio_sample)
+        for i in new_bio_samples_gtex:	
+             i.setIndividualId(new_bio_sample.getId())
+        repo.insertBioSample(new_bio_sample)
+    
     print ("Inserting tcga biosamples")
     new_bio_samples_tcga = []
     for bio_sample in bio_samples_tcga:
         new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
         new_bio_sample.populateFromJson(json.dumps(bio_sample))
-        repo.insertBioSample(new_bio_sample)
         new_bio_samples_tcga.append(new_bio_sample)
+        for i in new_bio_samples_tcga:
+			i.setIndividualId(new_bio_sample.getId())
+        repo.insertBioSample(new_bio_sample)
 
-	print("Load list of read group sets")
+	#print("Load list of read group sets")
     #with open (index_list_path) as merged:
     #    data = json.load(merged)
     #    print("Found {} read group sets".format(len(data)))
@@ -414,7 +418,7 @@ def main():
     
     
     repo.commit()
-    #print ( "database filled!")			
+    print ( "database filled!")			
 
 if __name__ == "__main__":
     main()
