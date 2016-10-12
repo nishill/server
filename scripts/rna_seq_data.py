@@ -388,15 +388,14 @@ def main():
         new_bio_sample.setIndividualId(str(individual_id['Characteristics[individual]']))
         repo.insertBioSample(new_bio_sample)
     
-    #print ("Inserting tcga biosamples")
-    #new_bio_samples_tcga = []
-    #for bio_sample in bio_samples_tcga:
-    #    new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
-    #    new_bio_sample.populateFromJson(json.dumps(bio_sample))
-    #    new_bio_samples_tcga.append(new_bio_sample)
-    #    for i in new_bio_samples_tcga:
-	#		i.setIndividualId(new_bio_sample.getId())
-    #    repo.insertBioSample(new_bio_sample)
+    print ("Inserting tcga biosamples")
+    new_bio_samples_tcga = []
+    for bio_sample in bio_samples_tcga:
+        new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
+        new_bio_sample.populateFromJson(json.dumps(bio_sample))
+        individual_id = bio_sample['info']
+        new_bio_sample.setIndividualId(str(individual_id['participant_id']))
+        repo.insertBioSample(new_bio_sample)
 
 	#print("Load list of read group sets")
     #with open (index_list_path) as merged:
