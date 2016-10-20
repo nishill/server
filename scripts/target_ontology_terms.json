@@ -1,0 +1,9 @@
+{ 
+"AML": {"id": "DOID:9119","term":"acute Myeloid Leukemia" ,"sourceName":"Disease Ontology","sourceVersion":"25:03:2016 16:27"}, 
+"Neuroblastoma": {"id": "DOID:769","term":"neuroblastoma" ,"sourceName":"Disease Ontology","sourceVersion":"25:03:2016 16:27"}, 
+"Acute Myeloid Leukemia, Induction Failure Subproject": {"id": "DOID:9119","term":"acute Myeloid Leukemia" ,"sourceName":"Disease Ontology","sourceVersion":"25:03:2016 16:27"}, 
+"Kidney, Rhabdoid Tumor": {"id": " DOID:3674","term":"renal Rhabdoid tumor" ,"sourceName":"Disease Ontology","sourceVersion":"25:03:2016 16:27"}, 
+"Clear Cell Sarcoma of the Kidney": {"id": "DOID:4880","term":"Clear cell sarcoma of kidney (morphologic abnormality)" ,"sourceName":"Disease Ontology","sourceVersion":"25:03:2016 16:27"}, 
+"Wilms Tumor": {"id": "DOID:2154","term":"renal Wilms tumor" ,"sourceName":"Disease Ontology","sourceVersion":"25:03:2016 16:27"}, 
+"Acute Lymphoblastic Leukemia": {"id": "DOID:9952","term":"acute lymphoblastic leukemia" ,"sourceName":"Disease Ontology","sourceVersion":"25:03:2016 16:27"}
+}

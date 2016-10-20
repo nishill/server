@@ -168,18 +168,74 @@ def parse_file_gtex(filename):
         individuals.append(individual)
   return individuals, bio_samples 
 
+# parses the tcga rna quantification data in a tsv file 
+# with target data and returns individual and biosample dictionaries
+def parse_file_target(filename):
+  ontology_dict = populate_ontology_dict('target_ontology_terms.json')
+  bio_samples = []
+  individuals = []
+  print("Loading biodata tsv from target")
+  with open(filename, 'r') as tsvfile:
+    reader = csv.DictReader(tsvfile,delimiter=str("\t"), quoting=csv.QUOTE_NONE)
+    id_map ={} 
+    for row in reader:
+      description = "{}".format(row['study'])
+      info = {}
+      for key in row:
+        info[key] = [row[key]]
+      biosample = {
+           "name": row['sample_type_name'],
+           "description": description,
+           "disease": ontology_dict[row['disease_name']],
+           "created": row['uploaded'],
+           "updated": row['modified'],
+           "info": info
+      }
+      if row['filename'] == 'male':
+        sex = {
+          "id": "PATO:0020001",
+          "term": "male genotypic sex",
+          "sourceName": "PATO",
+          "sourceVersion": "2015-11-18"
+        }
+      elif row['filename'] == 'female':
+        sex = { 
+          "id": "PATO:0020002",
+          "term": "female genotypic sex",
+          "sourceName": "PATO",
+          "sourceVersion": "2015-11-18"	
+        }   
+      else:sex = None
+      individual = {
+        "name" : row['participant_id'],
+        "description": description,
+        "created" : row['uploaded'],
+        "updated" : row['modified'],
+        "species": {
+            "term": row['disease_name'],
+            "id": "NCBITaxon:9606",
+            "sourceName": "http://purl.obolibrary.org/obo",
+            "sourceVersion": "2016-02-02"},
+        "sex": sex,
+        "info" : info 
+      } 
+      bio_samples.append(biosample)
+      individuals.append(individual)
+
+  return individuals, bio_samples
+ 
 # populates a dictionary of ontology terms from a json file
-# made from ontobee.org and tcga ontology terms 
-def populate_ontology_dict():
-  json_file = open('new_out.json')
+# made from ontobee.org and a files  ontology terms 
+def populate_ontology_dict(filename):
+  json_file = open(filename)
   ontology_dict = json_file.read()
   ontology_dict = json.loads(ontology_dict)
   return (ontology_dict)
 
-#the tcga rna quantification data in a tsv file and returns
+# parses the tcga rna quantification data in a tsv file and returns
 # individual and biosample dictionaries
 def parse_file_tcga(filename):
-  ontology_dict = populate_ontology_dict()
+  ontology_dict = populate_ontology_dict('tcga_ontology_terms.json')
   bio_samples = []
   individuals = []
   print("Loading biodata tsv from tcga")
@@ -199,9 +255,6 @@ def parse_file_tcga(filename):
         #  assert(id_map.get(row['sample_id'] == row['participant_id']))
         #else:
         #  id_map[row['sample_id']] = row['participant_id']	
-        #print ( row['sample_id'])
-        #print (row['disease_name'])
-        #print (ontology_dict[row['disease_name']])
         biosample = { 
              "name": row['sample_id'],
              "description": description,
@@ -253,7 +306,7 @@ def filter_data(data):
        name = d['name']
        distinct_name = filter(lambda x: x['name'] == name, data)
        for j,item in enumerate(distinct_name):
-            item['name'] = item['name'] + '-' + (j>0) * str(j)
+            if ( j>0):item['name'] = item['name'] + '-' + (j>0) * str(j)
     print ("filtering on data complete")
     return data
         
@@ -270,94 +323,43 @@ def initialize_disease_ontology(filename):
   print (ontology_dict)
   return ontology_dict
 
-# specification_list
-def specification_list():
-	spec_list = [
-	# Uterine Corpus Endometrioid Carcinoma 
-    {"id": "DOID:2871","term":"endometrial carcinoma" ,"source_name":"Disease Ontology","source_version":"25:03:2016 16:27"},
-	# Adrenocortical carcinoma
-    {"id": "DOID:3948" ,"term":"Adrenal cortical carcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-    # Thymoma 
-    {"id": "DOID:3275","term":"thymoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-    # Ovarian serous cystadenocarcinoma 
-	{"id":"DOID:5746" ,"term":"ovarian serous cystadenocarcinoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27" },
-	# Kidney renal clear cell carcinoma
-	{"id":"DOID:4467" ,"term":" clear cell kidney carcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Thyroid carcinoma 
-	{"id":"DOID:3963" ,"term":"Thyroid carcinoma" ,"source_name": "Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Cervical squamous cell carcinoma and endocervical adenocarcinoma
-	{"id": "DOID:3744","term":"Cervical squamous cell carcinoma and endocervical adenocarcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27"},
-	# Uveal Melanoma 
-	{"id":"DOID:6039" ,"term":"melanoma of Uvea" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Stomach adenocarcinoma 
-	{"id":"DOID:3717", "term":"Stomach adenocarcinoma", "source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Lung squamous cell carcinoma 
-	{"id":"DOID:3907" , "term":"squamous cell carcinoma of lung", "source_name":"Disease Ontology", "source_version":"25:03:2016 16:27" },
-	# Colon adenocarcinoma
-	{"id":"DOID:234" ,"term":"adenocarcinoma of the colon" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Liver hepatocellular carcinoma
-	{"id":"DOID:686" ,"term":"Liver and Intrahepatic bile duct carcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Esophageal carcinoma
-	{"id":"DOID:1107" ,"term":"cancer of esophagus" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Mesothelioma
-	{"id":"DOID:4486" ,"term":"mixed Mesothelioma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Head and Neck squamous cell carcinoma
-	{"id":"DOID:5520" ,"term":"Head and Neck squamous cell carcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Pheochromocytoma and Paraganglioma 
-	{"id":"DOID:0050892" ,"term":"Pheochromocytoma and Paraganglioma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Breast invasive carcinoma
-	{"id":"DOID:3610" ,"term":"Invasive mucinous breast carcinoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27"},
-	# Uterine Carcinosarcoma
-	{"id":"DOID:6171" ,"term":"mixed mullerian sarcoma of uterus" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Rectum adenocarcinoma
-	{"id": "DOID:1996","term":"adenocarcinoma of rectum" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Skin Cutaneous Melanoma
-	{"id": "DOID:8923","term":"skin melanoma" ,"source_name":"Disease Ontology" ,"source_version":"25:03:2016 16:27" },
-	# Prostate adenocarcinoma
-	{"id":"DOID:2526" ,"term":"Prostate adenocarcinoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Kidney Chromophobe
-	{"id":"DOID:4471" ,"term":"Chromophobe carcinoma of kidney" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Pancreatic adenocarcinoma
-	{"id": "DOID:4074" ,"term":"adenocarcinoma of the pancreas" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Kidney renal papillary cell carcinoma
-	{"id": "DOID:4465/DOID:8063" ,"term": "Papillary renal cell carcinoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Brain Lower Grade Glioma
-	{"id":"DOID:0060108" ,"term":"lower grade glioma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Lymphoid Neoplasm Diffuse Large B-cell Lymphoma
-	{"id":"DOID:0050745" ,"term":"diffuse large B-cell lymphoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Controls 
-	{"id":"" ,"term":"" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Lung adenocarcinoma
-	{"id":"DOID:3910" ,"term":"adenocarcinoma of lung" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Bladder Urothelial Carcinoma 
-	{"id":"DOID:4006" ,"term":"urothelial bladder carcinoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Cholangiocarcinoma 
-	{"id": "DOID:4947","term":"cholangiosarcoma" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Testicular Germ Cell Tumors
-	{"id":"DOID:5557" ,"term":"germ cell tumor of testis" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Glioblastoma multiforme
-	{"id":"DOID:3068" ,"term":"Glioblastoma multiforme" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"},
-	# Sarcoma
-	{"id":"DOID:1115" ,"term":"tumor of soft tissue and skeleton" ,"source_name":"Disease Ontology" ,"source_version": "25:03:2016 16:27"} ]	
-	return spec_list
+def add_individual_messages(new_individuals, individuals, dataset, repo):
+    for individual in individuals:
+      new_individual = biodata.Individual(dataset, individual['name'])
+      new_individual.populateFromJson(json.dumps(individual))
+      repo.insertIndividual(new_individual)
+      new_individuals.append(new_individual)
 
-
+def add_bio_sample_messages(new_bio_samples, bio_samples, dataset, repo, sample ):
+    for bio_sample in bio_samples:
+        new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
+        new_bio_sample.populateFromJson(json.dumps(bio_sample))
+        individual_id = bio_sample['info']
+        if ( sample == 'gtex' ):new_bio_sample.setIndividualId(str(individual_id['Characteristics[individual]']))
+        else: new_bio_sample.setIndividualId(str(individual_id['participant_id']))
+        repo.insertBioSample(new_bio_sample)
+     
+ 
 # populates database relations with data from each person
 # in the RnaQuantificationSet, RnaQuantification, and ExpressionLevel  
 @utils.Timed()
 def main():
     tsv_location_gtex = 'gtex.tsv'
     tsv_location_tcga = 'tcga.tsv'
+    tsv_location_target = 'target.tsv'
     individuals_gtex, bio_samples_gtex = parse_file_gtex(tsv_location_gtex)
     individuals_tcga, bio_samples_tcga = parse_file_tcga(tsv_location_tcga)
+    individuals_target, bio_samples_target = parse_file_target(tsv_location_target)
     individuals_gtex = filter_data(individuals_gtex)
     bio_samples_gtex = filter_data(bio_samples_gtex)
     individuals_tcga = filter_data(individuals_tcga)
     bio_samples_tcga = filter_data(bio_samples_tcga)
+    individuals_target = filter_data(individuals_target)
+    bio_samples_target = filter_data(bio_samples_target)
     repoPath = os.path.join("repo.db")
     repo = datarepo.SqlDataRepository(repoPath)
-    if ( os.path.isfile("repo.db") == True ):
-        os.system( "rm repo.db" )
+    # initialize the repo database if it still exists 
+    if ( os.path.isfile("repo.db") == True ):os.system( "rm repo.db" )
     repo.open("w")
     repo.initialise()
     dataset = datasets.Dataset("1kgenomes")
@@ -365,62 +367,24 @@ def main():
     repo.insertDataset(dataset) 
     print("Inserting gtex individuals")
     new_individuals_gtex = []
-    for individual in individuals_gtex:
-      new_individual = biodata.Individual(dataset, individual['name'])
-      new_individual.populateFromJson(json.dumps(individual))
-      repo.insertIndividual(new_individual)
-      new_individuals_gtex.append(new_individual)
-
+    add_individual_messages(new_individuals_gtex, individuals_gtex, dataset, repo)
     print ("Inserting tcga individuals")
     new_individuals_tcga = []
-    for individual in individuals_tcga:
-		new_individual = biodata.Individual(dataset, individual['name'])
-		new_individual.populateFromJson(json.dumps(individual))
-		repo.insertIndividual(new_individual)
-		new_individuals_tcga.append(new_individual)
-
+    add_individual_messages(new_individuals_tcga, individuals_tcga, dataset, repo)
+    print ("Inserting target individuals")
+    new_individuals_target = []
+    add_individual_messages(new_individuals_target, individuals_target, dataset, repo)
     print ("Inserting gtex biosamples")
     new_bio_samples_gtex = []
-    for bio_sample in bio_samples_gtex:
-        new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
-        new_bio_sample.populateFromJson(json.dumps(bio_sample))
-        individual_id = bio_sample['info']
-        new_bio_sample.setIndividualId(str(individual_id['Characteristics[individual]']))
-        repo.insertBioSample(new_bio_sample)
-    
+    add_bio_sample_messages(new_bio_samples_gtex, bio_samples_gtex, dataset, repo, 'gtex' )
     print ("Inserting tcga biosamples")
     new_bio_samples_tcga = []
-    for bio_sample in bio_samples_tcga:
-        new_bio_sample = biodata.BioSample(dataset, bio_sample['name'])
-        new_bio_sample.populateFromJson(json.dumps(bio_sample))
-        individual_id = bio_sample['info']
-        new_bio_sample.setIndividualId(str(individual_id['participant_id']))
-        repo.insertBioSample(new_bio_sample)
-
-	#print("Load list of read group sets")
-    #with open (index_list_path) as merged:
-    #    data = json.load(merged)
-    #    print("Found {} read group sets".format(len(data)))
-    #    if download_indexes:
-    #      save_files_locally(data)
-    #    # TODO might have to do something smart about pointing to different index locations
-    #    for row in data:
-    #        print("Adding {}".format(row['name']))
-    #        download_url = make_address(row['name'], os.path.basename(row['dataUrl']))
-    #        name = row['name']
-    #        read_group_set = reads.HtslibReadGroupSet(dataset, name)
-    #        read_group_set.populateFromFile(download_url, row['indexUrl'])
-    #        # could optimize by storing biodata in a name:value dictionary
-    #        for read_group in read_group_set.getReadGroups():
-    #          for bio_sample in new_bio_samples:
-    #              if bio_sample.getLocalId() == read_group.getSampleName():
-    #                  read_group.setBioSampleId(bio_sample.getId())
-    #        read_group_set.setReferenceSet(reference_set)
-    #        repo.insertReadGroupSet(read_group_set)
-    
-    
+    add_bio_sample_messages(new_bio_samples_tcga, bio_samples_tcga, dataset, repo, 'tcga' )
+    print ("Inserting target biosamples")
+    new_bio_samples_target = []
+    add_bio_sample_messages(new_bio_samples_target, bio_samples_target, dataset, repo, 'target' )
     repo.commit()
-    print ( "database filled!")			
+    print ( "output written to {}!".format(repoPath))			
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,6 @@
+sampleID	Disease	Gender	Anatomical_location	PANCAN_Cluster	PANCAN_DNAMethyl_Cluster	PANCAN_RPPA_PANCAN_K8	PANCAN_UNC_RNAseq_Cluster_K16	PANCAN_miRNA_Cluster	PANCAN_mutation_Cluster	PANCAN_CNA_Cluster_K8	Sample_type	Dataset
+ckcc_reference/TCGA-AB-2803-03	acute myeloid leukemia	FEMALE	White blood cell	C13-AML	LAML-like c19		LAML-like c13	miRNA c1uster 9	mutation c1uster 9	Quiet	Primary Blood Derived Cancer - Peripheral Blood	TCGA
+ckcc_reference/TCGA-AB-2805-03	acute myeloid leukemia	MALE	White blood cell	C13-AML	LAML-like c19		LAML-like c13	miRNA cluster 15	mutation c1uster 9	Kirc+	Primary Blood Derived Cancer - Peripheral Blood	TCGA
+ckcc_reference/TCGA-AB-2806-03	acute myeloid leukemia	MALE	White blood cell	C13-AML	LAML-like c19		LAML-like c13	miRNA cluster 15	mutation c1uster 9	Kirc+	Primary Blood Derived Cancer - Peripheral Blood	TCGA
+ckcc_reference/TCGA-AB-2808-03	acute myeloid leukemia	MALE	White blood cell	C13-AML	LAML-like c19		LAML-like c13	miRNA cluster 15	mutation c1uster 9	Quiet	Primary Blood Derived Cancer - Peripheral Blood	TCGA
+
