@@ -35,7 +35,7 @@ import ga4gh.datamodel.datasets as datasets  # NOQA
 import ga4gh.datamodel.variants as variants  # NOQA
 import ga4gh.datamodel.reads as reads  # NOQA
 import ga4gh.datamodel.ontologies as ontologies  # NOQA
-import ga4gh.datamodel.sequenceAnnotations as sequenceAnnotations  # NOQA
+import ga4gh.datamodel.sequence_annotations as sequenceAnnotations  # NOQA
 import ga4gh.datamodel.bio_metadata as biodata  # NOQA
 import ga4gh.datamodel.rna_quantification as rnaQuantifications #NOQA
 
@@ -58,6 +58,7 @@ def make_address( dirname, filename ):
 # parses the gtex rna quantification data in a tsv file and returns
 # individual and biosample dictionaries
 def parse_file_gtex(filename):
+  ontology_dict = populate_ontology_dict('gtex_ontology_terms.json')
   bio_samples = []
   individuals = []
   print("Loading biodata tsv from gtex")
@@ -125,8 +126,8 @@ def parse_file_gtex(filename):
         for key in row:
           info[key] = [row[key]]
         # TODO update to use schemas
-        disease = row['Characteristics[disease]']
-        if ( disease == 'normal'): disease = None
+        disease = ontology_dict[row['Characteristics[disease]']]
+        if ( bool(disease) == False): disease = None
         biosample = {
              "name": row['Source Name'],
              "description": description,
